@@ -36,7 +36,6 @@ func (record *Record) appendField(entry *DirectoryEntry) {
 	fieldData := Substr(record.Data, start, len)
 	field := Field{Data: fieldData, Tag: entry.Tag}
 	record.Fields = append(record.Fields, field)
-	println("field.Tag:", field.Tag, "field.Data:", field.Data)
 }
 
 func (record *Record) fillFields() {
@@ -44,7 +43,6 @@ func (record *Record) fillFields() {
 	for i, v := range record.Entries {
 		field := Field{Data: fieldsArr[i+1], Tag: v.Tag}
 		record.Fields = append(record.Fields, field)
-		println(field.Tag, ":", field.Data)
 	}
 }
 
@@ -61,14 +59,12 @@ func NewMarcRecord(data string) *Record {
 	record.Data = data
 	record.base, _ = strconv.Atoi(Substr(record.Data, 12, 5))
 	record.fieldsCount = (record.base - 25) / 12
-	println(record.Data)
 	record.FillEnries()
 	sort.SliceStable(record.Entries, func(i, j int) bool {
 		return record.Entries[i].offset < record.Entries[j].offset
 	})
 	record.fillFields()
-	binRecord := makeBinRecord(*record)
-	println(len(binRecord.Fields))
+	//binRecord := makeBinRecord(*record)
 	return record
 }
 
@@ -160,7 +156,6 @@ func makeBinRecord(record Record) BinRecord {
 		}
 		binRecord.Fields = append(binRecord.Fields, *binField)
 	}
-	println(BinRecordToString(binRecord))
 	return binRecord
 }
 
@@ -179,17 +174,25 @@ func BinRecordToString(binRecord BinRecord) string {
 	return result
 }
 
-type Catalog struct {
-	Name    string
-	Records []BinRecord
+type Index struct {
+	Name  string
+	Items map[string][]string
 }
 
-func CreateCatalog(name string, records []Record) *Catalog {
+type Catalog struct {
+	Name    string
+	Records map[string]BinRecord
+	Indexes map[string]Index
+}
+
+func CreateCatalog(name string, records *[]Record) *Catalog {
 	catalog := Catalog{}
 	catalog.Name = name
-	for _, record := range records {
+	catalog.Records = make(map[string]BinRecord)
+	catalog.Indexes = make(map[string]Index)
+	for _, record := range *records {
 		binRecord := makeBinRecord(record)
-		catalog.Records = append(catalog.Records, binRecord)
+		catalog.Records[binRecord.ID] = binRecord
 	}
 	return &catalog
 }

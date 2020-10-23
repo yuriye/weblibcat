@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/LindsayBradford/go-dbf/godbf"
 	"os"
-	"sort"
+	"runtime"
 	"strconv"
 )
 
@@ -14,7 +14,8 @@ func main() {
 	if len(os.Args) > 1 {
 		dirName = os.Args[1]
 	}
-	statistic := make(map[string]uint)
+
+	records := []marc.Record{}
 	for mc := 2; mc < 11; mc++ {
 		fileName := "MC" + strconv.Itoa(mc) + ".DBF"
 		dbfTable, err := godbf.NewFromFile(dirName+fileName, "CP866")
@@ -31,17 +32,30 @@ func main() {
 				marcRec += part
 			}
 			marcRecord := marc.NewMarcRecord(marcRec)
-			for _, entry := range marcRecord.Entries {
-				statistic[entry.Tag]++
-			}
+			records = append(records, *marcRecord)
 		}
 	}
-	keys := []string{}
-	for key, _ := range statistic {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-	for _, key := range keys {
-		fmt.Println(key, "=>", statistic[key])
-	}
+
+	catalog := marc.CreateCatalog("Книги", &records)
+	records = nil
+	println(len(catalog.Records))
+	//for key, val := range catalog.Records {
+	//	println(key, marc.BinRecordToString(val))
+	//}
+	PrintMemUsage()
+
+}
+
+func PrintMemUsage() {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	// For info on each, see: https://golang.org/pkg/runtime/#MemStats
+	fmt.Printf("Alloc = %v MiB", bToMb(m.Alloc))
+	fmt.Printf("\tTotalAlloc = %v MiB", bToMb(m.TotalAlloc))
+	fmt.Printf("\tSys = %v MiB", bToMb(m.Sys))
+	fmt.Printf("\tNumGC = %v\n", m.NumGC)
+}
+
+func bToMb(b uint64) uint64 {
+	return b / 1024 / 1024
 }
