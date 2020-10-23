@@ -1,6 +1,8 @@
 package marc
 
 import (
+	"github.com/LindsayBradford/go-dbf/godbf"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -159,7 +161,7 @@ func makeBinRecord(record Record) BinRecord {
 	return binRecord
 }
 
-func BinRecordToString(binRecord BinRecord) string {
+func (binRecord BinRecord) String() string {
 	result := "\nID:" + binRecord.ID
 	for _, field := range binRecord.Fields {
 		result += "\n" + field.Tag + ": "
@@ -195,4 +197,37 @@ func CreateCatalog(name string, records *[]Record) *Catalog {
 		catalog.Records[binRecord.ID] = binRecord
 	}
 	return &catalog
+}
+
+func CreateCatalogFromDBF(name string, dirName string) *Catalog {
+	var err error
+	records := []Record{}
+	for mc := 2; mc < 21; mc++ {
+		fileName := "MC" + strconv.Itoa(mc) + ".DBF"
+		dbfName := dirName + fileName
+
+		_, err = os.Stat(dbfName)
+		if os.IsNotExist(err) {
+			continue
+		}
+
+		dbfTable, err := godbf.NewFromFile(dbfName, "CP866")
+		if err != nil {
+			continue
+		}
+
+		for i := 0; i < dbfTable.NumberOfRecords(); i++ {
+			marcRec := ""
+			for fieldNumber := 1; fieldNumber <= mc; fieldNumber++ {
+				part, _ := dbfTable.FieldValueByName(i, "MF"+strconv.Itoa(fieldNumber))
+				marcRec += part
+			}
+			marcRecord := NewMarcRecord(marcRec)
+			records = append(records, *marcRecord)
+		}
+	}
+
+	catalog := CreateCatalog(name, &records)
+	records = nil
+	return catalog
 }

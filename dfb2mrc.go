@@ -3,47 +3,24 @@ package main
 import (
 	"./marc"
 	"fmt"
-	"github.com/LindsayBradford/go-dbf/godbf"
-	"os"
 	"runtime"
-	"strconv"
 )
 
 func main() {
-	dirName := "D:\\data\\ec5_base\\BOOK\\"
-	if len(os.Args) > 1 {
-		dirName = os.Args[1]
-	}
+	var directory string
 
-	records := []marc.Record{}
-	for mc := 2; mc < 11; mc++ {
-		fileName := "MC" + strconv.Itoa(mc) + ".DBF"
-		dbfTable, err := godbf.NewFromFile(dirName+fileName, "CP866")
-		if err != nil {
-			fmt.Println(err)
-			fmt.Println("Ошибка открытия!")
-			continue
-		}
-
-		for i := 0; i < dbfTable.NumberOfRecords(); i++ {
-			marcRec := ""
-			for fieldNumber := 1; fieldNumber <= mc; fieldNumber++ {
-				part, _ := dbfTable.FieldValueByName(i, "MF"+strconv.Itoa(fieldNumber))
-				marcRec += part
-			}
-			marcRecord := marc.NewMarcRecord(marcRec)
-			records = append(records, *marcRecord)
-		}
-	}
-
-	catalog := marc.CreateCatalog("Книги", &records)
-	records = nil
-	println(len(catalog.Records))
-	//for key, val := range catalog.Records {
-	//	println(key, marc.BinRecordToString(val))
+	directory = "D:\\data\\ec5_base\\BOOK\\"
+	catalogBooks := marc.CreateCatalogFromDBF("Книги", directory)
+	//for _, rec := range catalog.Records {
+	//	println(rec.String())
 	//}
+	println(len(catalogBooks.Records))
 	PrintMemUsage()
 
+	directory = "D:\\data\\ec5_base\\BIBS\\"
+	catalogBiblio := marc.CreateCatalogFromDBF("Библиография", directory)
+	println(len(catalogBiblio.Records))
+	PrintMemUsage()
 }
 
 func PrintMemUsage() {
