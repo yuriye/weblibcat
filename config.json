@@ -1,0 +1,13 @@
+{
+  "catalogs": [
+    {
+      "name": "Книги",
+      "dbfPath": "D:\\data\\ec5_base\\BOOK\\"
+    },
+    {
+      "name": "Библиография",
+      "dbfPath": "D:\\data\\ec5_base\\BIBS\\"
+    }
+  ],
+  "port": "3210"
+}
