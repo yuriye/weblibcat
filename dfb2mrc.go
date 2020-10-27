@@ -9,48 +9,43 @@ import (
 	"runtime"
 )
 
-func main() {
-	//var directory string
-	//dir, _ := os.Getwd()
-	//println(dir)
+type DbfCatalog struct {
+	Name    string
+	DbfPath string
+}
 
-	type Catalog struct {
-		Name    string
-		DbfPath string
-	}
+type Config struct {
+	DbfCatalogs []DbfCatalog
+}
 
-	type Config struct {
-		Catalogs []Catalog
-	}
-
-	file, err := os.Open("config.json")
+func GetCats(configFile string) (map[string](*marc.Catalog), error) {
+	file, err := os.Open(configFile)
 	if err != nil {
 		log.Fatal("Не могу открыть config: ", err)
-		return
+		return nil, err
 	}
 
 	decoder := json.NewDecoder(file)
 	config := new(Config)
 	err = decoder.Decode(&config)
-	for _, catalog := range config.Catalogs {
-		println(catalog.Name, catalog.DbfPath)
-		cat := marc.CreateCatalogFromDBF(catalog.Name, catalog.DbfPath)
-		println(len(cat.Records))
-		PrintMemUsage()
+	cats := make(map[string](*marc.Catalog))
+	for _, catalog := range config.DbfCatalogs {
+		//cats[catalog.Name] = marc.CreateCatalogFromDBF(catalog.Name, catalog.DbfPath)
+		cats[catalog.Name] = marc.CreateCatalogFromDBFNew(catalog.Name, catalog.DbfPath)
 	}
+	return cats, nil
+}
 
-	//directory = "D:\\data\\ec5_base\\BOOK\\"
-	//catalogBooks := marc.CreateCatalogFromDBF("Книги", directory)
-	////for _, rec := range catalog.Records {
-	////	println(rec.String())
-	////}
-	//println(len(catalogBooks.Records))
-	//PrintMemUsage()
-	//
-	//directory = "D:\\data\\ec5_base\\BIBS\\"
-	//catalogBiblio := marc.CreateCatalogFromDBF("Библиография", directory)
-	//println(len(catalogBiblio.Records))
-	//PrintMemUsage()
+func main() {
+	cats, err := GetCats("config.json")
+	if err != nil {
+		log.Panicf("Config file error:", err)
+		return
+	}
+	for key, value := range cats {
+		println(key, len(value.Records))
+	}
+	PrintMemUsage()
 }
 
 func PrintMemUsage() {

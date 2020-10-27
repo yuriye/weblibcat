@@ -1,5 +1,5 @@
 {
-  "catalogs": [
+  "dbfcatalogs": [
     {
       "name": "Книги",
       "dbfPath": "D:\\data\\ec5_base\\BOOK\\"

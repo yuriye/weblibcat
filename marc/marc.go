@@ -231,3 +231,39 @@ func CreateCatalogFromDBF(name string, dirName string) *Catalog {
 	records = nil
 	return catalog
 }
+
+func CreateCatalogFromDBFNew(name string, dirName string) *Catalog {
+	var err error
+	catalog := Catalog{}
+	catalog.Name = name
+	catalog.Records = make(map[string]BinRecord)
+	catalog.Indexes = make(map[string]Index)
+
+	for mc := 2; mc < 21; mc++ {
+		fileName := "MC" + strconv.Itoa(mc) + ".DBF"
+		dbfName := dirName + fileName
+
+		_, err = os.Stat(dbfName)
+		if os.IsNotExist(err) {
+			continue
+		}
+
+		dbfTable, err := godbf.NewFromFile(dbfName, "CP866")
+		if err != nil {
+			continue
+		}
+
+		for i := 0; i < dbfTable.NumberOfRecords(); i++ {
+			marcRec := ""
+			for fieldNumber := 1; fieldNumber <= mc; fieldNumber++ {
+				part, _ := dbfTable.FieldValueByName(i, "MF"+strconv.Itoa(fieldNumber))
+				marcRec += part
+			}
+			marcRecord := NewMarcRecord(marcRec)
+			//records = append(records, *marcRecord)
+			binRecord := makeBinRecord(*marcRecord)
+			catalog.Records[binRecord.ID] = binRecord
+		}
+	}
+	return &catalog
+}
