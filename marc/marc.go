@@ -66,7 +66,6 @@ func NewMarcRecord(data string) *Record {
 		return record.Entries[i].offset < record.Entries[j].offset
 	})
 	record.fillFields()
-	//binRecord := makeBinRecord(*record)
 	return record
 }
 
@@ -121,7 +120,6 @@ type BinRecord struct {
 }
 
 func MakeBinField(field *Field) (*BinField, error) {
-	//var binField *BinField
 	binField := new(BinField)
 	if Substr(field.Tag, 0, 2) == "00" {
 		binField.Tag = field.Tag
@@ -187,51 +185,6 @@ type Catalog struct {
 	Indexes map[string]Index
 }
 
-func CreateCatalog(name string, records *[]Record) *Catalog {
-	catalog := Catalog{}
-	catalog.Name = name
-	catalog.Records = make(map[string]BinRecord)
-	catalog.Indexes = make(map[string]Index)
-	for _, record := range *records {
-		binRecord := makeBinRecord(record)
-		catalog.Records[binRecord.ID] = binRecord
-	}
-	return &catalog
-}
-
-func CreateCatalogFromDBF(name string, dirName string) *Catalog {
-	var err error
-	records := []Record{}
-	for mc := 2; mc < 21; mc++ {
-		fileName := "MC" + strconv.Itoa(mc) + ".DBF"
-		dbfName := dirName + fileName
-
-		_, err = os.Stat(dbfName)
-		if os.IsNotExist(err) {
-			continue
-		}
-
-		dbfTable, err := godbf.NewFromFile(dbfName, "CP866")
-		if err != nil {
-			continue
-		}
-
-		for i := 0; i < dbfTable.NumberOfRecords(); i++ {
-			marcRec := ""
-			for fieldNumber := 1; fieldNumber <= mc; fieldNumber++ {
-				part, _ := dbfTable.FieldValueByName(i, "MF"+strconv.Itoa(fieldNumber))
-				marcRec += part
-			}
-			marcRecord := NewMarcRecord(marcRec)
-			records = append(records, *marcRecord)
-		}
-	}
-
-	catalog := CreateCatalog(name, &records)
-	records = nil
-	return catalog
-}
-
 func CreateCatalogFromDBFNew(name string, dirName string) *Catalog {
 	var err error
 	catalog := Catalog{}
@@ -259,9 +212,7 @@ func CreateCatalogFromDBFNew(name string, dirName string) *Catalog {
 				part, _ := dbfTable.FieldValueByName(i, "MF"+strconv.Itoa(fieldNumber))
 				marcRec += part
 			}
-			marcRecord := NewMarcRecord(marcRec)
-			//records = append(records, *marcRecord)
-			binRecord := makeBinRecord(*marcRecord)
+			binRecord := makeBinRecord(*NewMarcRecord(marcRec))
 			catalog.Records[binRecord.ID] = binRecord
 		}
 	}
