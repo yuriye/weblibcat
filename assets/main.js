@@ -3,20 +3,21 @@ var vue_det = new Vue({
     data:
         {
             message: 'Запрос',
-            ISDN: '',
+            ISBN: '',
             Author: '',
             Title: ''
         },
     methods:
         {
             find: function () {
+                console.log(this.ISBN + "," + this.Author + "," + this.Title);
                 this.$http.post
                 (
                     '/find',
                     {
-                        isdn: this.ISDN,
-                        author: this.Author,
-                        title: this.Title
+                        ISBN: this.ISBN,
+                        Author: this.Author,
+                        Title: this.Title
                     }
                 )
                     .then

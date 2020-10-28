@@ -27,7 +27,7 @@ type Routes []Route
 var routes = Routes{
 	Route{
 		"find",
-		"GET",
+		"POST",
 		"/find",
 		find,
 	},
@@ -51,13 +51,14 @@ func init() {
 }
 
 func find(w http.ResponseWriter, r *http.Request) {
+	catalogItem := CatalogItem{}
+	err := json.NewDecoder(r.Body).Decode(&catalogItem)
+	if err != nil {
+		log.Print("error occurred while decoding catalogItem data :: ", err)
+		return
+	}
+	log.Println(catalogItem.ISBN, catalogItem.Author, catalogItem.Title)
 	json.NewEncoder(w).Encode(catalogItems)
-}
-
-type Employee struct {
-	Id        string `json:"id"`
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
 }
 
 func AddRoutes(router *mux.Router) *mux.Router {
@@ -80,17 +81,18 @@ func main() {
 	for key, value := range cats {
 		log.Println(key, len(value.Records))
 	}
+	LogMemUsage()
 
 	muxRouter := mux.NewRouter().StrictSlash(true)
 	router := AddRoutes(muxRouter)
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./assets/")))
+	log.Println("Listenning at " + CONN_HOST + ":" + CONN_PORT)
 	err = http.ListenAndServe(CONN_HOST+":"+CONN_PORT, router)
 	if err != nil {
 		log.Fatal("error starting http server :: ", err)
 		return
 	}
 
-	LogMemUsage()
 }
 
 func LogMemUsage() {
@@ -99,7 +101,7 @@ func LogMemUsage() {
 	log.Println(fmt.Sprintf("Alloc = %v MiB", bToMb(m.Alloc)) +
 		fmt.Sprintf("\tTotalAlloc = %v MiB", bToMb(m.TotalAlloc)) +
 		fmt.Sprintf("\tSys = %v MiB", bToMb(m.Sys)) +
-		fmt.Sprintf("\tNumGC = %v\n", m.NumGC))
+		fmt.Sprintf("\tNumGC = %v", m.NumGC))
 }
 
 func bToMb(b uint64) uint64 {
