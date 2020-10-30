@@ -2,6 +2,7 @@ package main
 
 import (
 	"./dbf2marc"
+	"./marc"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -35,8 +36,8 @@ var routes = Routes{
 
 type CatalogItem struct {
 	ISBN   string `json:"ISBN"`
-	Author string `json:"autor"`
-	Title  string `json:"title"`
+	Author string `json:"Author"`
+	Title  string `json:"Title"`
 }
 
 type CatalogItems []CatalogItem
@@ -50,6 +51,14 @@ func init() {
 	}
 }
 
+func findByISBN(isbn string) *[]marc.BinRecord {
+	for _, record := range cats["Книги"].Records {
+		//record.Fields[]
+	}
+
+	return nil
+}
+
 func find(w http.ResponseWriter, r *http.Request) {
 	catalogItem := CatalogItem{}
 	err := json.NewDecoder(r.Body).Decode(&catalogItem)
@@ -58,6 +67,15 @@ func find(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Println(catalogItem.ISBN, catalogItem.Author, catalogItem.Title)
+	var records *[]marc.BinRecord = nil
+	if catalogItem.ISBN != "" {
+		records = findByISBN(catalogItem.ISBN)
+	} else if catalogItem.Author != "" {
+
+	} else {
+
+	}
+
 	json.NewEncoder(w).Encode(catalogItems)
 }
 
@@ -72,8 +90,11 @@ func AddRoutes(router *mux.Router) *mux.Router {
 	return router
 }
 
+var cats map[string](*marc.Catalog)
+
 func main() {
-	cats, err := dbf2marc.GetCats("config.json")
+	var err error
+	cats, err = dbf2marc.GetCats("config.json")
 	if err != nil {
 		log.Panicf("Config file error:", err)
 		return

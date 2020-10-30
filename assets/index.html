@@ -31,6 +31,14 @@
                 </a></td>
         </tr>
     </table>
+    <h1>Результат:</h1>
+    <ul>
+        <li v-for="item in queryResult">
+            {{item.Author}}
+            {{item.Title}}
+            {{item.ISBN}}
+        </li>
+    </ul>
 </div>
 
 <script type="text/javascript" src="main.js"></script>

@@ -1,11 +1,12 @@
-var vue_det = new Vue({
+var vm = new Vue({
     el: '#form',
     data:
         {
             message: 'Запрос',
             ISBN: '',
             Author: '',
-            Title: ''
+            Title: '',
+            queryResult: []
         },
     methods:
         {
@@ -19,11 +20,11 @@ var vue_det = new Vue({
                         Author: this.Author,
                         Title: this.Title
                     }
-                )
-                    .then
+                ).then
                     (
                         response => {
-                            console.log(response);
+                            console.log(response.data);
+                            Vue.set(vm, 'queryResult', response.data)
                         },
                         error => {
                             console.error(error);
