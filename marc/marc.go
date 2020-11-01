@@ -119,6 +119,19 @@ type BinRecord struct {
 	Fields []BinField
 }
 
+func (record *BinRecord) GetISBN() string {
+	for _, field := range record.Fields {
+		if field.Tag == "020" {
+			for _, subfield := range field.Subfields {
+				if subfield.Tag == "a" {
+					return subfield.Content
+				}
+			}
+		}
+	}
+	return ""
+}
+
 func MakeBinField(field *Field) (*BinField, error) {
 	binField := new(BinField)
 	if Substr(field.Tag, 0, 2) == "00" {

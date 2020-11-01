@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"runtime"
+	"strings"
 )
 
 const (
@@ -51,13 +52,20 @@ func init() {
 	}
 }
 
-func findByISBN(isbn string) *[]marc.BinRecord {
-	for _, record := range cats["Книги"].Records {
-		//record.Fields[]
-	}
 
-	return nil
+
+func findByISBN(isbn string) *[]marc.BinRecord {
+	result := []marc.BinRecord{}
+	for _, record := range cats["Книги"].Records {
+		if strings.ReplaceAll(isbn, "-", "") !=
+			strings.ReplaceAll(record.GetISBN(), "-", "") {
+			continue
+		}
+		result = append(result, record)
+	}
+	return &result
 }
+
 
 func find(w http.ResponseWriter, r *http.Request) {
 	catalogItem := CatalogItem{}
@@ -67,7 +75,7 @@ func find(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Println(catalogItem.ISBN, catalogItem.Author, catalogItem.Title)
-	var records *[]marc.BinRecord = nil
+	var records *[]marc.BinRecord
 	if catalogItem.ISBN != "" {
 		records = findByISBN(catalogItem.ISBN)
 	} else if catalogItem.Author != "" {
@@ -75,7 +83,14 @@ func find(w http.ResponseWriter, r *http.Request) {
 	} else {
 
 	}
-
+	catalogItems := []CatalogItem{}
+	for _, binRecord := range *records {
+		catalogItems = append(catalogItems,
+			CatalogItem{
+			ISBN: binRecord.GetISBN(),
+			Author: "auth",
+			Title: "title"})
+	}
 	json.NewEncoder(w).Encode(catalogItems)
 }
 
@@ -88,6 +103,30 @@ func AddRoutes(router *mux.Router) *mux.Router {
 			Handler(route.HandlerFunc)
 	}
 	return router
+}
+
+func LogMemUsage() {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	log.Println(fmt.Sprintf("Alloc = %v MiB", bToMb(m.Alloc)) +
+		fmt.Sprintf("\tTotalAlloc = %v MiB", bToMb(m.TotalAlloc)) +
+		fmt.Sprintf("\tSys = %v MiB", bToMb(m.Sys)) +
+		fmt.Sprintf("\tNumGC = %v", m.NumGC))
+}
+
+func bToMb(b uint64) uint64 {
+	return b / 1024 / 1024
+}
+
+type fieldsStatistics map[string]int
+
+func printFieldsStatistis(cat marc.Catalog)  {
+	statistics := fieldsStatistics{}
+	for _, record := range cat.Records {
+		for field := range record.Fields {
+			statistics[field.]
+		}
+	}
 }
 
 var cats map[string](*marc.Catalog)
@@ -114,17 +153,4 @@ func main() {
 		return
 	}
 
-}
-
-func LogMemUsage() {
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
-	log.Println(fmt.Sprintf("Alloc = %v MiB", bToMb(m.Alloc)) +
-		fmt.Sprintf("\tTotalAlloc = %v MiB", bToMb(m.TotalAlloc)) +
-		fmt.Sprintf("\tSys = %v MiB", bToMb(m.Sys)) +
-		fmt.Sprintf("\tNumGC = %v", m.NumGC))
-}
-
-func bToMb(b uint64) uint64 {
-	return b / 1024 / 1024
 }
