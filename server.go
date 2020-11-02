@@ -52,8 +52,6 @@ func init() {
 	}
 }
 
-
-
 func findByISBN(isbn string) *[]marc.BinRecord {
 	result := []marc.BinRecord{}
 	for _, record := range cats["Книги"].Records {
@@ -65,7 +63,6 @@ func findByISBN(isbn string) *[]marc.BinRecord {
 	}
 	return &result
 }
-
 
 func find(w http.ResponseWriter, r *http.Request) {
 	catalogItem := CatalogItem{}
@@ -87,9 +84,9 @@ func find(w http.ResponseWriter, r *http.Request) {
 	for _, binRecord := range *records {
 		catalogItems = append(catalogItems,
 			CatalogItem{
-			ISBN: binRecord.GetISBN(),
-			Author: "auth",
-			Title: "title"})
+				ISBN:   binRecord.GetISBN(),
+				Author: "auth",
+				Title:  "title"})
 	}
 	json.NewEncoder(w).Encode(catalogItems)
 }
@@ -120,12 +117,15 @@ func bToMb(b uint64) uint64 {
 
 type fieldsStatistics map[string]int
 
-func printFieldsStatistis(cat marc.Catalog)  {
+func printFieldsStatistis(cat marc.Catalog) {
 	statistics := fieldsStatistics{}
 	for _, record := range cat.Records {
-		for field := range record.Fields {
-			statistics[field.]
+		for _, field := range record.Fields {
+			statistics[field.Tag] += 1
 		}
+	}
+	for key, item := range statistics {
+		println(key, item)
 	}
 }
 
@@ -140,6 +140,7 @@ func main() {
 	}
 	for key, value := range cats {
 		log.Println(key, len(value.Records))
+		printFieldsStatistis(*value)
 	}
 	LogMemUsage()
 
