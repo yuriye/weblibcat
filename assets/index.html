@@ -13,10 +13,6 @@
     <h1>{{ message }}</h1>
     <table>
         <tr>
-            <td><label for="ISBN">ISBN</label></td>
-            <td><input type="text" value="" v-model="ISBN"/></td>
-        </tr>
-        <tr>
             <td><label for="Author">Автор</label></td>
             <td><input type="text" value="" v-model="Author"/>
             <td>
@@ -29,6 +25,10 @@
         <tr>
             <td><a href="#" class="btn" @click="find">Найти
                 </a></td>
+        </tr>
+        <tr>
+            <td><label for="ISBN">ISBN</label></td>
+            <td><input type="text" value="" v-model="ISBN"/></td>
         </tr>
     </table>
     <h1>Результат:</h1>

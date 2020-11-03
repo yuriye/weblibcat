@@ -1,11 +1,15 @@
-package dbf2marc
+package util
 
 import (
-	"../marc"
 	"encoding/json"
 	"log"
 	"os"
 )
+
+type Connection struct {
+	Host string
+	Port string
+}
 
 type DbfCatalog struct {
 	Name    string
@@ -14,21 +18,19 @@ type DbfCatalog struct {
 
 type Config struct {
 	DbfCatalogs []DbfCatalog
+	Connection  Connection
 }
 
-func GetCats(configFile string) (map[string](*marc.Catalog), error) {
+func GetConfig(configFile string) (*Config, error) {
 	file, err := os.Open(configFile)
 	if err != nil {
 		log.Fatal("Не могу открыть config: ", err)
 		return nil, err
 	}
+	defer file.Close()
 
 	decoder := json.NewDecoder(file)
 	config := new(Config)
 	err = decoder.Decode(&config)
-	cats := make(map[string](*marc.Catalog))
-	for _, catalog := range config.DbfCatalogs {
-		cats[catalog.Name] = marc.CreateCatalogFromDBFNew(catalog.Name, catalog.DbfPath)
-	}
-	return cats, nil
+	return config, err
 }

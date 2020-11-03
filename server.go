@@ -1,14 +1,12 @@
 package main
 
 import (
-	"./dbf2marc"
 	"./marc"
+	"./util"
 	"encoding/json"
-	"fmt"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
-	"runtime"
 	"strings"
 )
 
@@ -36,25 +34,20 @@ var routes = Routes{
 }
 
 type CatalogItem struct {
-	ISBN   string `json:"ISBN"`
-	Author string `json:"Author"`
-	Title  string `json:"Title"`
+	Author          string `json:"author"`
+	Title           string `json:"title"`
+	ISBN            string `json:"isbn"`
+	BBK             string `json:"bbk"`
+	PublishingPlace string `json:"publishing_place"`
 }
 
 type CatalogItems []CatalogItem
 
 var catalogItems []CatalogItem
 
-func init() {
-	catalogItems = CatalogItems{
-		CatalogItem{ISBN: "1", Author: "Foo", Title: "Bar"},
-		CatalogItem{ISBN: "2", Author: "Baz", Title: "Qux"},
-	}
-}
-
-func findByISBN(isbn string) *[]marc.BinRecord {
+func findByISBN(isbn string, pCat *marc.Catalog) *[]marc.BinRecord {
 	result := []marc.BinRecord{}
-	for _, record := range cats["Книги"].Records {
+	for _, record := range pCat.Records {
 		if strings.ReplaceAll(isbn, "-", "") !=
 			strings.ReplaceAll(record.GetISBN(), "-", "") {
 			continue
@@ -74,7 +67,7 @@ func find(w http.ResponseWriter, r *http.Request) {
 	log.Println(catalogItem.ISBN, catalogItem.Author, catalogItem.Title)
 	var records *[]marc.BinRecord
 	if catalogItem.ISBN != "" {
-		records = findByISBN(catalogItem.ISBN)
+		records = findByISBN(catalogItem.ISBN, cats["Книги"])
 	} else if catalogItem.Author != "" {
 
 	} else {
@@ -102,53 +95,35 @@ func AddRoutes(router *mux.Router) *mux.Router {
 	return router
 }
 
-func LogMemUsage() {
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
-	log.Println(fmt.Sprintf("Alloc = %v MiB", bToMb(m.Alloc)) +
-		fmt.Sprintf("\tTotalAlloc = %v MiB", bToMb(m.TotalAlloc)) +
-		fmt.Sprintf("\tSys = %v MiB", bToMb(m.Sys)) +
-		fmt.Sprintf("\tNumGC = %v", m.NumGC))
-}
+var cats map[string]*marc.Catalog
 
-func bToMb(b uint64) uint64 {
-	return b / 1024 / 1024
-}
-
-type fieldsStatistics map[string]int
-
-func printFieldsStatistis(cat marc.Catalog) {
-	statistics := fieldsStatistics{}
-	for _, record := range cat.Records {
-		for _, field := range record.Fields {
-			statistics[field.Tag] += 1
-		}
+func GetCats(config *util.Config) (map[string]*marc.Catalog, error) {
+	cats := make(map[string](*marc.Catalog))
+	for _, catalog := range config.DbfCatalogs {
+		cats[catalog.Name] = marc.CreateCatalogFromDBFNew(catalog.Name, catalog.DbfPath)
 	}
-	for key, item := range statistics {
-		println(key, item)
-	}
+	return cats, nil
 }
-
-var cats map[string](*marc.Catalog)
 
 func main() {
 	var err error
-	cats, err = dbf2marc.GetCats("config.json")
+	pConfig, err := util.GetConfig("config.json")
+	cats, err := GetCats(pConfig)
 	if err != nil {
 		log.Panicf("Config file error:", err)
 		return
 	}
 	for key, value := range cats {
 		log.Println(key, len(value.Records))
-		printFieldsStatistis(*value)
+		util.PrintFieldsStatistis(*value)
 	}
-	LogMemUsage()
+	util.LogMemUsage()
 
 	muxRouter := mux.NewRouter().StrictSlash(true)
 	router := AddRoutes(muxRouter)
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./assets/")))
-	log.Println("Listenning at " + CONN_HOST + ":" + CONN_PORT)
-	err = http.ListenAndServe(CONN_HOST+":"+CONN_PORT, router)
+	log.Println("Listenning at " + pConfig.Connection.Host + ":" + pConfig.Connection.Port)
+	err = http.ListenAndServe(pConfig.Connection.Host+":"+pConfig.Connection.Port, router)
 	if err != nil {
 		log.Fatal("error starting http server :: ", err)
 		return

@@ -9,5 +9,8 @@
       "dbfPath": "D:\\data\\ec5_base\\BIBS\\"
     }
   ],
-  "port": "3210"
+  "connection": {
+    "host": "localhost",
+    "port": "3210"
+  }
 }

@@ -3,9 +3,9 @@ var vm = new Vue({
     data:
         {
             message: 'Запрос',
-            ISBN: '',
-            Author: '',
-            Title: '',
+            isbn: '',
+            author: '',
+            title: '',
             queryResult: []
         },
     methods:
