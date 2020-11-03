@@ -13,30 +13,31 @@
     <h1>{{ message }}</h1>
     <table>
         <tr>
-            <td><label for="Author">Автор</label></td>
-            <td><input type="text" value="" v-model="Author"/>
+            <td><label for="author">Автор</label></td>
+            <td><input type="text" value="" v-model="author"/>
             <td>
         </tr>
         <tr>
-            <td><label for="Title">Наименование</label></td>
-            <td><input type="text" value="" v-model="Title"/>
+            <td><label for="title">Наименование</label></td>
+            <td><input type="text" value="" v-model="title"/>
             </td>
+        </tr>
+        <tr>
+            <td><label for="isbn">ISBN</label></td>
+            <td><input type="text" value="" v-model="isbn"/></td>
         </tr>
         <tr>
             <td><a href="#" class="btn" @click="find">Найти
                 </a></td>
         </tr>
-        <tr>
-            <td><label for="ISBN">ISBN</label></td>
-            <td><input type="text" value="" v-model="ISBN"/></td>
-        </tr>
+
     </table>
     <h1>Результат:</h1>
     <ul>
         <li v-for="item in queryResult">
-            {{item.Author}}
-            {{item.Title}}
-            {{item.ISBN}}
+            {{item.author}}
+            {{item.title}}
+            {{item.isbn}}
         </li>
     </ul>
 </div>

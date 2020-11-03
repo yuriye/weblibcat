@@ -74,12 +74,14 @@ func find(w http.ResponseWriter, r *http.Request) {
 
 	}
 	catalogItems := []CatalogItem{}
-	for _, binRecord := range *records {
-		catalogItems = append(catalogItems,
-			CatalogItem{
-				ISBN:   binRecord.GetISBN(),
-				Author: "auth",
-				Title:  "title"})
+	if records != nil {
+		for _, binRecord := range *records {
+			catalogItems = append(catalogItems,
+				CatalogItem{
+					ISBN:   binRecord.GetISBN(),
+					Author: "auth",
+					Title:  "title"})
+		}
 	}
 	json.NewEncoder(w).Encode(catalogItems)
 }
@@ -115,9 +117,10 @@ func main() {
 	}
 	for key, value := range cats {
 		log.Println(key, len(value.Records))
-		util.PrintFieldsStatistis(*value)
+		//util.PrintFieldsStatistis(*value)
 	}
-	util.LogMemUsage()
+
+	//util.LogMemUsage()
 
 	muxRouter := mux.NewRouter().StrictSlash(true)
 	router := AddRoutes(muxRouter)
