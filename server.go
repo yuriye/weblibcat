@@ -34,22 +34,54 @@ var routes = Routes{
 }
 
 type CatalogItem struct {
+	ID              string `json:"id"`
 	Author          string `json:"author"`
 	Title           string `json:"title"`
 	ISBN            string `json:"isbn"`
 	BBK             string `json:"bbk"`
 	PublishingPlace string `json:"publishing_place"`
+	Body            string `json:"body"`
 }
 
 type CatalogItems []CatalogItem
 
 var catalogItems []CatalogItem
 
+var cats map[string]*marc.Catalog
+
 func findByISBN(isbn string, pCat *marc.Catalog) *[]marc.BinRecord {
 	result := []marc.BinRecord{}
 	for _, record := range pCat.Records {
 		if strings.ReplaceAll(isbn, "-", "") !=
 			strings.ReplaceAll(record.GetISBN(), "-", "") {
+			continue
+		}
+		result = append(result, record)
+	}
+	return &result
+}
+
+func findByAuthor(author string, pCat *marc.Catalog) *[]marc.BinRecord {
+	result := []marc.BinRecord{}
+	auth := strings.Trim(strings.ToLower(author), " ")
+
+	for _, record := range pCat.Records {
+		f100 := strings.Trim(strings.ToLower(record.GetAuthor()), " ")
+		if !strings.Contains(f100, auth) {
+			continue
+		}
+		result = append(result, record)
+	}
+	return &result
+}
+
+func findByTitle(tit string, pCat *marc.Catalog) *[]marc.BinRecord {
+	result := []marc.BinRecord{}
+	title := strings.Trim(strings.ToLower(tit), " ")
+
+	for _, record := range pCat.Records {
+		f245 := strings.Trim(strings.ToLower(record.GetTitle()), " ")
+		if f245 != title {
 			continue
 		}
 		result = append(result, record)
@@ -68,8 +100,10 @@ func find(w http.ResponseWriter, r *http.Request) {
 	var records *[]marc.BinRecord
 	if catalogItem.ISBN != "" {
 		records = findByISBN(catalogItem.ISBN, cats["Книги"])
+	} else if catalogItem.Title != "" {
+		records = findByTitle(catalogItem.Title, cats["Книги"])
 	} else if catalogItem.Author != "" {
-
+		records = findByAuthor(catalogItem.Author, cats["Книги"])
 	} else {
 
 	}
@@ -78,9 +112,11 @@ func find(w http.ResponseWriter, r *http.Request) {
 		for _, binRecord := range *records {
 			catalogItems = append(catalogItems,
 				CatalogItem{
+					ID:     binRecord.ID,
 					ISBN:   binRecord.GetISBN(),
-					Author: "auth",
-					Title:  "title"})
+					Author: binRecord.GetAuthor(),
+					Title:  binRecord.GetTitle(),
+					Body:   binRecord.String()})
 		}
 	}
 	json.NewEncoder(w).Encode(catalogItems)
@@ -97,8 +133,6 @@ func AddRoutes(router *mux.Router) *mux.Router {
 	return router
 }
 
-var cats map[string]*marc.Catalog
-
 func GetCats(config *util.Config) (map[string]*marc.Catalog, error) {
 	cats := make(map[string](*marc.Catalog))
 	for _, catalog := range config.DbfCatalogs {
@@ -110,11 +144,13 @@ func GetCats(config *util.Config) (map[string]*marc.Catalog, error) {
 func main() {
 	var err error
 	pConfig, err := util.GetConfig("config.json")
-	cats, err := GetCats(pConfig)
+	cats, err = GetCats(pConfig)
+
 	if err != nil {
 		log.Panicf("Config file error:", err)
 		return
 	}
+
 	for key, value := range cats {
 		log.Println(key, len(value.Records))
 		//util.PrintFieldsStatistis(*value)

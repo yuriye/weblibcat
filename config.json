@@ -2,11 +2,11 @@
   "dbfcatalogs": [
     {
       "name": "Книги",
-      "dbfPath": "D:\\data\\ec5_base\\BOOK\\"
+      "dbfPath": "C:\\data\\ec5_base\\BOOK\\"
     },
     {
       "name": "Библиография",
-      "dbfPath": "D:\\data\\ec5_base\\BIBS\\"
+      "dbfPath": "C:\\data\\ec5_base\\BIBS\\"
     }
   ],
   "connection": {

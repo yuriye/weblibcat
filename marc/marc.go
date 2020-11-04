@@ -132,6 +132,32 @@ func (record *BinRecord) GetISBN() string {
 	return ""
 }
 
+func (record *BinRecord) GetAuthor() string {
+	for _, field := range record.Fields {
+		if field.Tag == "100" {
+			for _, subfield := range field.Subfields {
+				if subfield.Tag == "a" {
+					return subfield.Content
+				}
+			}
+		}
+	}
+	return ""
+}
+
+func (record *BinRecord) GetTitle() string {
+	for _, field := range record.Fields {
+		if field.Tag == "245" {
+			for _, subfield := range field.Subfields {
+				if subfield.Tag == "a" {
+					return strings.Trim(subfield.Content, " ")
+				}
+			}
+		}
+	}
+	return ""
+}
+
 func MakeBinField(field *Field) (*BinField, error) {
 	binField := new(BinField)
 	if Substr(field.Tag, 0, 2) == "00" {
@@ -173,15 +199,21 @@ func makeBinRecord(record Record) BinRecord {
 }
 
 func (binRecord BinRecord) String() string {
-	result := "\nID:" + binRecord.ID
+	result := ""
 	for _, field := range binRecord.Fields {
-		result += "\n" + field.Tag + ": "
-		result += "inds:"
-		for _, ind := range field.Indicators {
-			result += ind
+		if field.Tag == "001" ||
+			field.Tag == "005" ||
+			field.Tag == "008" ||
+			field.Tag == "520" ||
+			field.Tag == "650" ||
+			field.Tag == "773" ||
+			field.Tag == "856" ||
+			field.Tag == "952" {
+			continue
 		}
+		result += "   "
 		for _, subfield := range field.Subfields {
-			result += "\n\t\tsTag:" + subfield.Tag + " Content:" + subfield.Content
+			result += subfield.Content + " "
 		}
 	}
 	return result

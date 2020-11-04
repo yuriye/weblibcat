@@ -11,14 +11,15 @@ var vm = new Vue({
     methods:
         {
             find: function () {
-                console.log(this.ISBN + "," + this.Author + "," + this.Title);
+                this.queryResult = []
+                console.log(this.isbn + "," + this.author + "," + this.title);
                 this.$http.post
                 (
                     '/find',
                     {
-                        ISBN: this.ISBN,
-                        Author: this.Author,
-                        Title: this.Title
+                        ISBN: this.isbn,
+                        Author: this.author,
+                        Title: this.title
                     }
                 ).then
                     (
